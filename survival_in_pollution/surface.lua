@@ -1,4 +1,9 @@
+INIT_PHASE_CREATE_SURFACE = 1
+INIT_PHASE_SET_SPAWN = 2
+INIT_PHASE_COMPLETED = -1
+
 local function delete_other_surfaces()
+    -- cannot delete the default surface!!! why?
     for _, surface in pairs(game.surfaces) do
         if surface.name ~= SURVIVAL_IN_POLLUTION then
             game.print("delete surface " .. surface.name)
@@ -27,17 +32,6 @@ local function init_map_gen_settings()
     return map_gen_settings
 end
 
-local function teleport_players(surface)
-    local spawn_position_x = -76
-    local pos = surface.find_non_colliding_position("player", { spawn_position_x + 1, 4 }, 50, 1)
-    game.print(pos)
-    game.print(surface.name)
-    game.forces["player"].set_spawn_position(pos, surface)
-    for _, player in pairs(game.connected_players) do
-        local pos = surface.find_non_colliding_position("player", { spawn_position_x + 1, 4 }, 50, 1)
-        player.teleport(pos, surface)
-    end
-end
 
 local function create_surface()
     local map_gen_settings = init_map_gen_settings()
@@ -57,21 +51,19 @@ local function init_map_settings()
     --game.map_settings.enemy_evolution.pollution_factor = 0
 end
 
-local function do_init_surface(event)
-    if not global.init_done then
+local function do_init_surface()
+    if not global.init_phase then
         game.print('surface init start')
         local surface = create_surface()
-        teleport_players(surface)
-        delete_other_surfaces()
         view_starting_area(surface)
         init_map_settings()
-        global.init_done = true
+        global.init_phase = INIT_PHASE_SET_SPAWN
         game.print('surface init completed')
     end
 end
 
 local function on_player_joined_game(event)
-    do_init_surface(event)
+    --do_init_surface(event)
     --if player.online_time < 1 then
     --    player.insert({name = "pistol", count = 1})
     --    player.insert({name = "iron-axe", count = 1})
@@ -91,12 +83,32 @@ local function on_player_joined_game(event)
     --end
 end
 
-local function on_chunk_generated(event)
-    if event.surface and event.surface.name == SURVIVAL_IN_POLLUTION then
 
+-- teleport player and set spawn location
+
+
+local function teleport_players(surface)
+    local spawn_position_x = -76
+    local pos = surface.find_non_colliding_position("player", { spawn_position_x + 1, 4 }, 50, 1)
+    game.forces["player"].set_spawn_position(pos, surface)
+    for _, player in pairs(game.connected_players) do
+        local pos = surface.find_non_colliding_position("player", { spawn_position_x + 1, 4 }, 50, 1)
+        player.teleport(pos, surface)
+    end
+end
+
+local function on_chunk_generated(event)
+    if global.init_phase == INIT_PHASE_SET_SPAWN then
+        if event.surface and event.surface.name == SURVIVAL_IN_POLLUTION then
+            teleport_players(event.surface)
+            --delete_other_surfaces()
+            global.init_phase = INIT_PHASE_COMPLETED
+        end
     end
 end
 
 local event = require('utils.event')
-event.add(defines.events.on_player_joined_game, on_player_joined_game)
+log('add do_init_surface')
+event.on_init(do_init_surface)
+--event.add(defines.events.on_player_joined_game, on_player_joined_game)
 event.add(defines.events.on_chunk_generated, on_chunk_generated)

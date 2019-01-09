@@ -1,1 +1,2 @@
-DEBUG = true
+DEBUG = false
+_DEBUG = false
