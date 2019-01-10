@@ -1,3 +1,5 @@
+require 'stdlib/event/event'
+
 INIT_PHASE_CREATE_SURFACE = 1
 INIT_PHASE_SET_SPAWN = 2
 INIT_PHASE_COMPLETED = -1
@@ -107,8 +109,6 @@ local function on_chunk_generated(event)
     end
 end
 
-local event = require('utils.event')
-log('add do_init_surface')
-event.on_init(do_init_surface)
+Event.register(Event.core_events.init, do_init_surface)
 --event.add(defines.events.on_player_joined_game, on_player_joined_game)
-event.add(defines.events.on_chunk_generated, on_chunk_generated)
+Event.register(defines.events.on_chunk_generated, on_chunk_generated)

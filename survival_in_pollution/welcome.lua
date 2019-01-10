@@ -1,4 +1,4 @@
-local event = require('utils.event')
+require 'stdlib/event/event'
 
 local function welcome(event)
     local player = game.players[event.player_index]
@@ -6,4 +6,4 @@ local function welcome(event)
     player.print({ "msg-intro" })
 end
 
-event.add(defines.events.on_player_created, welcome)
+Event.register(defines.events.on_player_created, welcome)

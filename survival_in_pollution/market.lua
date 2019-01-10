@@ -1,4 +1,4 @@
-local event = require('utils.event')
+require('stdlib/event/event')
 
 local function refresh_market_offers()
     if not global.market then
@@ -34,6 +34,7 @@ local function refresh_market_offers()
         --{price = {}, offer = {type = 'nothing', effect_description = str3}},
         --{price = {}, offer = {type = 'nothing', effect_description = str4}},
         --{price = {}, offer = {type = 'nothing', effect_description = str5}},
+        { price = { { "raw-fish", 1 } }, offer = { type = 'give-item', item = "coin", count = 4 } },
         { price = { { "coin", 5 } }, offer = { type = 'give-item', item = "raw-fish", count = 1 } },
         { price = { { "coin", 1 } }, offer = { type = 'give-item', item = 'raw-wood', count = 8 } },
         { price = { { "coin", 8 } }, offer = { type = 'give-item', item = 'grenade', count = 1 } },
@@ -124,5 +125,5 @@ local function on_chunk_generated(event)
     end
 end
 
-event.add(defines.events.on_chunk_generated, on_chunk_generated)
+Event.register(defines.events.on_chunk_generated, on_chunk_generated)
 

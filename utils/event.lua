@@ -1,4 +1,5 @@
-local Event = {}
+require 'stdlib/event/event'
+local LocalEvent = {}
 
 local init_event_name = -1
 local load_event_name = -2
@@ -45,37 +46,40 @@ local function on_nth_tick_event(event)
     call_handlers(handlers, event)
 end
 
-function Event.add(event_name, handler)
+function LocalEvent.add(event_name, handler)
     local handlers = event_handlers[event_name]
     if not handlers then
         event_handlers[event_name] = {handler}
-        script.on_event(event_name, on_event)
+        --script.on_event(event_name, on_event)
+        Event.register(event_name, on_event)
     else
         table.insert(handlers, handler)
     end
 end
 
-function Event.on_init(handler)
+function LocalEvent.on_init(handler)
     local handlers = event_handlers[init_event_name]
     if not handlers then
         event_handlers[init_event_name] = {handler}
-        script.on_init(on_init)
+        --script.on_init(on_init)
+        Event.register(Event.core_events.init, on_init)
     else
         table.insert(handlers, handler)
     end
 end
 
-function Event.on_load(handler)
+function LocalEvent.on_load(handler)
     local handlers = event_handlers[load_event_name]
     if not handlers then
         event_handlers[load_event_name] = {handler}
-        script.on_load(on_load)
+        --script.on_load(on_load)
+        Event.register(Event.core_events.load, on_load)
     else
         table.insert(handlers, handler)
     end
 end
 
-function Event.on_nth_tick(tick, handler)
+function LocalEvent.on_nth_tick(tick, handler)
     local handlers = on_nth_tick_event_handlers[tick]
     if not handlers then
         on_nth_tick_event_handlers[tick] = {handler}
@@ -88,7 +92,7 @@ end
 local Token = require 'utils.global_token'
 global.event_tokens = {}
 
-function Event.add_removable(event_name, token)
+function LocalEvent.add_removable(event_name, token)
     local event_tokens = global.event_tokens
 
     local tokens = event_tokens[event_name]
@@ -100,7 +104,7 @@ function Event.add_removable(event_name, token)
 
     if not control_stage then
         local handler = Token.get(token)
-        Event.add(event_name, handler)
+        LocalEvent.add(event_name, handler)
     end
 end
 
@@ -113,7 +117,7 @@ local function remove(t, e)
     end
 end
 
-function Event.remove_removable(event_name, token)
+function LocalEvent.remove_removable(event_name, token)
     local event_tokens = global.event_tokens
 
     local tokens = event_tokens[event_name]
@@ -128,9 +132,9 @@ function Event.remove_removable(event_name, token)
     remove(tokens, token)
     remove(handlers, handler)
 
-    if #handlers == 0 then
-        script.on_event(event_name, nil)
-    end
+    --if #handlers == 0 then
+    --    script.on_event(event_name, nil)
+    --end
 end
 
 local function add_token_handlers()
@@ -141,12 +145,24 @@ local function add_token_handlers()
     for event_name, tokens in pairs(event_tokens) do
         for _, token in ipairs(tokens) do
             local handler = Token.get(token)
-            Event.add(event_name, handler)
+            LocalEvent.add(event_name, handler)
         end
     end
 end
 
-Event.on_init(add_token_handlers)
-Event.on_load(add_token_handlers)
+LocalEvent.on_init(add_token_handlers)
+LocalEvent.on_load(add_token_handlers)
 
-return Event
+return LocalEvent
+
+--require('stdlib/event/event')
+--
+--return {
+--    add = Event.register,
+--    on_init = function(handler)
+--        Event.register(Event.core_events.init, handler)
+--    end,
+--    on_load = function(handler)
+--        Event.register(Event.core_events.load, handler)
+--    end
+--}
